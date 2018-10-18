@@ -7,7 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		7610E470216C3A730057028D /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7610E46F216C3A730057028D /* main.cpp */; };
+		7610E478216C3A800057028D /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7610E477216C3A800057028D /* OpenGL.framework */; };
+		7610E47A216C3A840057028D /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7610E479216C3A840057028D /* GLUT.framework */; };
+		7610E47C216C3C370057028D /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7610E47B216C3C370057028D /* SDL2.framework */; };
+		7610E4A8216D95AE0057028D /* Interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7610E483216D8BDF0057028D /* Interface.cpp */; };
+		7610E4A9216D9E700057028D /* World.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7610E486216D8C3B0057028D /* World.cpp */; };
+		7610E4AB216DC4E60057028D /* image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7610E48D216D8D550057028D /* image.cpp */; };
+		7610E4AC216DC53C0057028D /* pixel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7610E489216D8CD90057028D /* pixel.cpp */; };
+		769BAA66217527EA00C2B060 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 769BAA65217527EA00C2B060 /* main.cpp */; };
+		76B991142177FFF900D287F2 /* Entities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 76B991122177FFF900D287F2 /* Entities.cpp */; };
+		76B991172178023A00D287F2 /* Lights.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 76B991152178023A00D287F2 /* Lights.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -24,7 +33,25 @@
 
 /* Begin PBXFileReference section */
 		7610E46C216C3A730057028D /* Raytracing */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Raytracing; sourceTree = BUILT_PRODUCTS_DIR; };
-		7610E46F216C3A730057028D /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		7610E477216C3A800057028D /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		7610E479216C3A840057028D /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
+		7610E47B216C3C370057028D /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = ../../../../../../../Library/Frameworks/SDL2.framework; sourceTree = "<group>"; };
+		7610E483216D8BDF0057028D /* Interface.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Interface.cpp; sourceTree = "<group>"; };
+		7610E484216D8BDF0057028D /* Interface.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Interface.hpp; sourceTree = "<group>"; };
+		7610E486216D8C3B0057028D /* World.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = World.cpp; sourceTree = "<group>"; };
+		7610E487216D8C3B0057028D /* World.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = World.hpp; sourceTree = "<group>"; };
+		7610E489216D8CD90057028D /* pixel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pixel.cpp; sourceTree = "<group>"; };
+		7610E48A216D8CD90057028D /* pixel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pixel.h; sourceTree = "<group>"; };
+		7610E48C216D8D550057028D /* image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = image.h; sourceTree = "<group>"; };
+		7610E48D216D8D550057028D /* image.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = image.cpp; sourceTree = "<group>"; };
+		7610E48F216D8DB80057028D /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stb_image.h; sourceTree = "<group>"; };
+		7610E490216D8DB80057028D /* stb_image_write.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stb_image_write.h; sourceTree = "<group>"; };
+		769BAA65217527EA00C2B060 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		76B991112177CDDC00D287F2 /* Default_setting.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Default_setting.h; sourceTree = "<group>"; };
+		76B991122177FFF900D287F2 /* Entities.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Entities.cpp; sourceTree = "<group>"; };
+		76B991132177FFF900D287F2 /* Entities.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Entities.hpp; sourceTree = "<group>"; };
+		76B991152178023A00D287F2 /* Lights.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Lights.cpp; sourceTree = "<group>"; };
+		76B991162178023A00D287F2 /* Lights.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Lights.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +59,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7610E47C216C3C370057028D /* SDL2.framework in Frameworks */,
+				7610E47A216C3A840057028D /* GLUT.framework in Frameworks */,
+				7610E478216C3A800057028D /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -43,6 +73,7 @@
 			children = (
 				7610E46E216C3A730057028D /* Raytracing */,
 				7610E46D216C3A730057028D /* Products */,
+				7610E476216C3A7F0057028D /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -57,9 +88,34 @@
 		7610E46E216C3A730057028D /* Raytracing */ = {
 			isa = PBXGroup;
 			children = (
-				7610E46F216C3A730057028D /* main.cpp */,
+				7610E486216D8C3B0057028D /* World.cpp */,
+				76B991152178023A00D287F2 /* Lights.cpp */,
+				76B991162178023A00D287F2 /* Lights.hpp */,
+				76B991122177FFF900D287F2 /* Entities.cpp */,
+				76B991132177FFF900D287F2 /* Entities.hpp */,
+				7610E487216D8C3B0057028D /* World.hpp */,
+				769BAA65217527EA00C2B060 /* main.cpp */,
+				7610E483216D8BDF0057028D /* Interface.cpp */,
+				7610E484216D8BDF0057028D /* Interface.hpp */,
+				7610E490216D8DB80057028D /* stb_image_write.h */,
+				7610E48F216D8DB80057028D /* stb_image.h */,
+				7610E489216D8CD90057028D /* pixel.cpp */,
+				7610E48A216D8CD90057028D /* pixel.h */,
+				7610E48D216D8D550057028D /* image.cpp */,
+				7610E48C216D8D550057028D /* image.h */,
+				76B991112177CDDC00D287F2 /* Default_setting.h */,
 			);
 			path = Raytracing;
+			sourceTree = "<group>";
+		};
+		7610E476216C3A7F0057028D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				7610E47B216C3C370057028D /* SDL2.framework */,
+				7610E479216C3A840057028D /* GLUT.framework */,
+				7610E477216C3A800057028D /* OpenGL.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -118,7 +174,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7610E470216C3A730057028D /* main.cpp in Sources */,
+				7610E4AC216DC53C0057028D /* pixel.cpp in Sources */,
+				76B991172178023A00D287F2 /* Lights.cpp in Sources */,
+				7610E4AB216DC4E60057028D /* image.cpp in Sources */,
+				769BAA66217527EA00C2B060 /* main.cpp in Sources */,
+				7610E4A9216D9E700057028D /* World.cpp in Sources */,
+				76B991142177FFF900D287F2 /* Entities.cpp in Sources */,
+				7610E4A8216D95AE0057028D /* Interface.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,6 +302,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
+				HEADER_SEARCH_PATHS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -248,6 +315,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
+				HEADER_SEARCH_PATHS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

@@ -2,6 +2,12 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:pixel.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:pixel.h">
+   </FileRef>
+   <FileRef
       location = "self:Raytracing.xcodeproj">
    </FileRef>
 </Workspace>
