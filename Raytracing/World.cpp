@@ -6,11 +6,12 @@
 //  Copyright © 2018 Dengyuan Wang. All rights reserved.
 //
 
+
 #include "World.hpp"
 
 //World class
 
-World::World(string filename){
+World::World(std::string filename){
     
     W_Settings.setting_file = filename;//specify the setting file
     if(!build_world())
@@ -24,35 +25,35 @@ bool World::build_world(){
     return true;
 }
 bool World::load_setting(){
-    string line;
+    std::string line;
     
-    string fileName = W_Settings.setting_file;
+    std::string fileName = W_Settings.setting_file;
     
     // open the file containing the scene description
-    ifstream input(fileName);
+    std::ifstream input(fileName);
     
     // check for errors in opening the file
     if(input.fail()){
-        cout << "Can't open file '" << fileName << "'" << endl;
+        std::cout << "Can't open file '" << fileName << "'" << std::endl;
         return false;
     }
     
     // determine the file size (this is optional -- feel free to delete the 6 lines below)
-    streampos begin,end;
+    std::streampos begin,end;
     begin = input.tellg();
-    input.seekg(0, ios::end);
+    input.seekg(0, std::ios::end);
     end = input.tellg();
-    cout << "File '" << fileName << "' is: " << (end-begin) << " bytes long.\n\n";
-    input.seekg(0, ios::beg);
+    std::cout << "File '" << fileName << "' is: " << (end-begin) << " bytes long.\n\n";
+    input.seekg(0, std::ios::beg);
     
     
     //Loop through reading each line
-    string command;
+    std::string command;
     while(input >> command) { //Read first word in the line (i.e., the command type)
         
         if (command[0] == '#'){
             getline(input, line); //skip rest of line
-            cout << "Skipping comment: " << command  << line <<  endl;
+            std::cout << "Skipping comment: " << command  << line <<  std::endl;
             continue;
         }
         
@@ -130,7 +131,7 @@ bool World::load_setting(){
             else printf("ambient_light add error parameters of:\n(%f,%f,%f)\n",r, g, b);
         }
         else if (command == "output_image"){ //If the command is an output_image command
-            string outFile;
+            std::string outFile;
             input >> outFile;
             W_Settings.output_image = outFile;
             printf("Render to file named: %s\n", outFile.c_str());
@@ -143,52 +144,28 @@ bool World::load_setting(){
         }
         else {
             getline(input, line); //skip rest of line
-            cout << "WARNING. Do not know command: " << command << endl;
+            std::cout << "WARNING. Do not know command: " << command << std::endl;
         }
     }
     
     return true;
 }
 bool World::add_plane(float x,float y,float z,float dx,float dy,float dz){//one point and one n could decide a plane
-    W_Objects_pt O_pt=nullptr,pt_head=Objs;
-    if (pt_head==nullptr)//not W_Objects yet
-    {
-        Objs = new W_Objects;
-        Objs->obj_name = W_Objects::plane;
-        for(int i=0;i<14;i++)
-            Objs->material[i] = W_Settings.material[i];
-        Objs->obj_parameters = new float[6];
-        Objs->obj_parameters[0] = x;
-        Objs->obj_parameters[1] = y;
-        Objs->obj_parameters[2] = z;
-        Objs->obj_parameters[3] = dx;
-        Objs->obj_parameters[4] = dy;
-        Objs->obj_parameters[5] = dz;
-        Objs->next = nullptr;
-        return true;
-    }else{//at least one object
-        O_pt = pt_head->next;
-        while(O_pt!=nullptr){
-            pt_head = O_pt;
-            O_pt = O_pt->next;
-        }
-        O_pt = new W_Objects;
-        O_pt->obj_name = W_Objects::plane;
-        for(int i=0;i<sizeof(W_Settings.material);i++)
-            O_pt->material[i] = W_Settings.material[i];
-        O_pt->obj_parameters = new float[6];
-        O_pt->obj_parameters[0] = x;
-        O_pt->obj_parameters[1] = y;
-        O_pt->obj_parameters[2] = z;
-        O_pt->obj_parameters[3] = dx;
-        O_pt->obj_parameters[4] = dy;
-        O_pt->obj_parameters[5] = dz;
-        O_pt->next = nullptr;
-        pt_head->next = O_pt;
-        return true;
-    }
+    
+    return false;
 }
 bool World::add_sphere(float x,float y,float z,float r){
+    Entities tmp;
+    tmp.set_entity_name("sphere");
+    tmp.set_entity_parameter(0, x);
+    tmp.set_entity_parameter(1, y);
+    tmp.set_entity_parameter(2, z);
+    tmp.set_entity_parameter(3, r);
+    for(int i=0;i<14;i++)
+        tmp.set_property_material(i,  W_Settings.material[i]);
+    Ets.push_front(tmp);
+    return true;
+    /*
     W_Objects_pt O_pt=nullptr,pt_head=Objs;
     if (pt_head==nullptr)//not W_Objects yet
     {
@@ -223,118 +200,47 @@ bool World::add_sphere(float x,float y,float z,float r){
         O_pt->next = nullptr;
         pt_head->next = O_pt;
         return true;
-        
-    }
+    }*/
 }
 bool World::add_directional_light(float r,float g,float b,float x,float y,float z){
     //point_light r, g, b, x, y, z
     //float point_light[6] = {255, 255, 255, 10, 10, 10};
-    Lights_pt head = Lgts,l_pt;
-    if(Lgts==nullptr){
-        Lgts = new Lights;
-        Lgts->lgt_name = Lights::directional_light;
-        Lgts->lgt_parameters = new float[6];
-        Lgts->lgt_parameters[0] = r;Lgts->lgt_parameters[1] = g;Lgts->lgt_parameters[2] = b;
-        Lgts->lgt_parameters[3] = x;Lgts->lgt_parameters[4] = y;Lgts->lgt_parameters[5] = z;
-        Lgts->next = nullptr;
-        return true;
-    }else{
-        while(head->next!=nullptr){
-            head = head->next;
-        }
-        l_pt = new Lights;
-        l_pt->lgt_name = Lights::directional_light;
-        l_pt->lgt_parameters = new float[6];
-        l_pt->lgt_parameters[0] = r;l_pt->lgt_parameters[1] = g;l_pt->lgt_parameters[2] = b;
-        l_pt->lgt_parameters[3] = x;l_pt->lgt_parameters[4] = y;l_pt->lgt_parameters[5] = z;
-        l_pt->next = nullptr;
-        head->next = l_pt;
-        return true;
-    }
-    return false;
+    Lights tmp;
+    tmp.set_lgt_name("directional_light");
+    tmp.set_lgt_parameter(0, r);tmp.set_lgt_parameter(1, g);tmp.set_lgt_parameter(2, b);
+    tmp.set_lgt_parameter(3, x);tmp.set_lgt_parameter(4, y);tmp.set_lgt_parameter(5, z);
+    Lgts.push_front(tmp);
+    return true;
 }
 bool World::add_point_light(float r,float g,float b,float x,float y,float z){
     //point_light r, g, b, x, y, z
     //float point_light[6] = {255, 255, 255, 10, 10, 10};
-    Lights_pt head = Lgts,l_pt;
-    if(Lgts==nullptr){
-        Lgts = new Lights;
-        Lgts->lgt_name = Lights::point_light;
-        Lgts->lgt_parameters = new float[6];
-        Lgts->lgt_parameters[0] = r;Lgts->lgt_parameters[1] = g;Lgts->lgt_parameters[2] = b;
-        Lgts->lgt_parameters[3] = x;Lgts->lgt_parameters[4] = y;Lgts->lgt_parameters[5] = z;
-        Lgts->next = nullptr;
-        return true;
-    }else{
-        while(head->next!=nullptr){
-            head = head->next;
-        }
-        l_pt = new Lights;
-        l_pt->lgt_name = Lights::point_light;
-        l_pt->lgt_parameters = new float[6];
-        l_pt->lgt_parameters[0] = r;l_pt->lgt_parameters[1] = g;l_pt->lgt_parameters[2] = b;
-        l_pt->lgt_parameters[3] = x;l_pt->lgt_parameters[4] = y;l_pt->lgt_parameters[5] = z;
-        l_pt->next = nullptr;
-        head->next = l_pt;
-        return true;
-    }
-    return false;
+    Lights tmp;
+    tmp.set_lgt_name("point_light");
+    tmp.set_lgt_parameter(0, r);tmp.set_lgt_parameter(1, g);tmp.set_lgt_parameter(2, b);
+    tmp.set_lgt_parameter(3, x);tmp.set_lgt_parameter(4, y);tmp.set_lgt_parameter(5, z);
+    Lgts.push_front(tmp);
+    return true;
 }
 bool World::add_spot_light(float r,float g,float b,float px,float py,float pz,float dx,float dy,float dz,float angle1,float angle2){
     //point_light r, g, b, x, y, z
     //float point_light[6] = {255, 255, 255, 10, 10, 10};
-    Lights_pt head = Lgts,l_pt;
-    if(Lgts==nullptr){
-        Lgts = new Lights;
-        Lgts->lgt_name = Lights::spot_light;
-        Lgts->lgt_parameters = new float[11];
-        Lgts->lgt_parameters[0] = r;Lgts->lgt_parameters[1] = g;Lgts->lgt_parameters[2] = b;
-        Lgts->lgt_parameters[3] = px;Lgts->lgt_parameters[4] = py;Lgts->lgt_parameters[5] = pz;
-        Lgts->lgt_parameters[6] = dx;Lgts->lgt_parameters[7] = dy;Lgts->lgt_parameters[8] = dz;
-        Lgts->lgt_parameters[9] = angle1;Lgts->lgt_parameters[10] = angle2;
-        Lgts->next = nullptr;
-        return true;
-    }else{
-        while(head->next!=nullptr){
-            head = head->next;
-        }
-        l_pt = new Lights;
-        l_pt->lgt_name = Lights::spot_light;
-        l_pt->lgt_parameters = new float[11];
-        l_pt->lgt_parameters[0] = r;l_pt->lgt_parameters[1] = g;l_pt->lgt_parameters[2] = b;
-        l_pt->lgt_parameters[3] = px;l_pt->lgt_parameters[4] = py;l_pt->lgt_parameters[5] = pz;
-        l_pt->lgt_parameters[6] = dx;l_pt->lgt_parameters[7] = dy;l_pt->lgt_parameters[8] = dz;
-        l_pt->lgt_parameters[9] = angle1;l_pt->lgt_parameters[10] = angle2;
-        l_pt->next = nullptr;
-        head->next = l_pt;
-        return true;
-    }
-    return false;
+    Lights tmp;
+    tmp.set_lgt_name("spot_light");
+    tmp.set_lgt_parameter(0, r);tmp.set_lgt_parameter(1, g);tmp.set_lgt_parameter(2, b);
+    tmp.set_lgt_parameter(3, px);tmp.set_lgt_parameter(4, py);tmp.set_lgt_parameter(5, pz);
+    tmp.set_lgt_parameter(6, dx);tmp.set_lgt_parameter(7, dy);tmp.set_lgt_parameter(8, dz);
+    tmp.set_lgt_parameter(9, angle1);tmp.set_lgt_parameter(10, angle2);
+    Lgts.push_front(tmp);
+    return true;
 }
 bool World::add_ambient_light(float r,float g,float b){
     //point_light r, g, b
-    Lights_pt head = Lgts,l_pt;
-    if(Lgts==nullptr){
-        Lgts = new Lights;
-        Lgts->lgt_name = Lights::ambient_light;
-        Lgts->lgt_parameters = new float[3];
-        Lgts->lgt_parameters[0] = r;Lgts->lgt_parameters[1] = g;Lgts->lgt_parameters[2] = b;
-        Lgts->next = nullptr;
-        return true;
-    }else{
-        while(head->next!=nullptr){
-            //printf("head->lgt_name: %d",head->lgt_name);
-            head = head->next;
-        }
-        l_pt = new Lights;
-        l_pt->lgt_name = Lights::ambient_light;
-        l_pt->lgt_parameters = new float[3];
-        l_pt->lgt_parameters[0] = r;l_pt->lgt_parameters[1] = g;l_pt->lgt_parameters[2] = b;
-        l_pt->next = nullptr;
-        head->next = l_pt;
-        return true;
-    }
-    return false;
+    Lights tmp;
+    tmp.set_lgt_name("ambient_light");
+    tmp.set_lgt_parameter(0, r);tmp.set_lgt_parameter(1, g);tmp.set_lgt_parameter(2, b);
+    Lgts.push_front(tmp);
+    return true;
 }
 bool World::ray_tracing(){
     printf("ray tracing begin:_________________________\n");
@@ -348,16 +254,9 @@ bool World::ray_tracing(){
                 percentage =(100*i*j)/(width*height);
                 printf("processing: %d\n",percentage);
             }
-            
-            /* typedef struct R_values{
-                    W_Objects_pt obj;
-                    Lights lgt;
-                    float pos[3];
-                    float rgb[3];// range 0~1
-                }R_values;*/
             R_values R;
-            if(check_intersect(R, Ray[index_ray(i, j)])==true){
-                calcu_color(R,W_Settings.max_depth);
+            if(check_intersect(R, Ray[index_ray(i, j)])==true){//R include objname, first intersect pos
+                calcu_color(R,Ray[index_ray(i, j)],W_Settings.max_depth);
                 Scn[index_ray(i, j)].rgb[0] = R.rgb[0]*255;
                 Scn[index_ray(i, j)].rgb[1] = R.rgb[1]*255;
                 Scn[index_ray(i, j)].rgb[2] = R.rgb[2]*255;
@@ -372,196 +271,70 @@ bool World::ray_tracing(){
     return true;
 }
 bool World::check_intersect(R_values &R, Rays ray){//ray collision check
-    W_Objects_pt header=Objs;
-    float t = 0;
-    bool collision_tag = false;
-    while(header!=nullptr){
-        if(header->obj_name==W_Objects::sphere){
-            float x,x0,y,y0,z,z0,dx,dy,dz,r,t1,t2;
-            x = ray.Point[0];y = ray.Point[1];z = ray.Point[2];
-            dx = ray.Direction[0];dy = ray.Direction[1];dz = ray.Direction[2];
-            x0 = header->obj_parameters[0];
-            y0 = header->obj_parameters[1];
-            z0 = header->obj_parameters[2];
-            r  = header->obj_parameters[3];
-            float a,b,c;
-            a = dx*dx+dy*dy+dz*dz;
-            b = 2.0*(dx*(x-x0)+dy*(y-y0)+dz*(z-z0));
-            c = (x-x0)*(x-x0) + (y-y0)*(y-y0) + (z-z0)*(z-z0) - r*r;
-            if(b*b-4.0*a*c>=0)//intersect
-            {
-                t1 = (-b + sqrt(b*b-4.0*a*c))/(2.0*a);
-                t2 = (-b - sqrt(b*b-4.0*a*c))/(2.0*a);
-                if(fmax(t1,t2)<=0){// no leagle one
-                    
-                }
-                else if(ray.range>=0&&fmin(t1,t2)>ray.range)//check for segment. for ray the range will be -1, mean disable;
-                {
-                    
-                }
-                else if(t1<=0){//only t2
-                    if(collision_tag==false||t>=t2){
-                        t = t2;
-                        R.obj = header;
-                        R.pos[0] = x+t*dx;R.pos[1] = y+t*dy;R.pos[2] = z+t*dz;
-                        collision_tag = true;
-                    }
-                }
-                else if(t2<=0){//only t1
-                    if(collision_tag==false||t>=t1){
-                        t = t1;
-                        R.obj = header;
-                        R.pos[0] = x+t*dx;R.pos[1] = y+t*dy;R.pos[2] = z+t*dz;
-                        collision_tag = true;
-                    }
-                }
-                else{//intersect two points
-                    if(collision_tag==false){//no former collision
-                        if(t1<t2){//save nearest one
-                            t = t1;
-                            R.obj = header;
-                            R.pos[0] = x+t*dx;R.pos[1] = y+t*dy;R.pos[2] = z+t*dz;
-                        }else{
-                            t = t2;
-                            R.obj = header;
-                            R.pos[0] = x+t*dx;R.pos[1] = y+t*dy;R.pos[2] = z+t*dz;
-                        }
-                        collision_tag = true;
-                    }else{//have former collision
-                        if(t1<=t2&&t1<=t){//save the smallest one between these two and former nearest one
-                            t = t1;
-                            R.obj = header;
-                            R.pos[0] = x+t*dx;R.pos[1] = y+t*dy;R.pos[2] = z+t*dz;
-                        }else if(t2<=t&&t2<=t1){
-                            t = t2;
-                            R.obj = header;
-                            R.pos[0] = x+t*dx;R.pos[1] = y+t*dy;R.pos[2] = z+t*dz;
-                        }
-                    }
 
-                }
-                
-            }
-        }else{
-            printf("error obj name:%d in check_intersect\n",header->obj_name);
-            return false;
+    R_values T_r;
+    bool collision_tag = false;
+    float t=-1;
+    for(std::list<Entities>::iterator it=Ets.begin();it!=Ets.end();++it){
+        collision_tag = collision_tag||it->check_intersect(T_r, ray);
+        if(t>T_r.dis_in_t){
+            R=T_r;
+            R.entity = &(*it);
+            t = T_r.dis_in_t;
         }
-        header = header->next;
     }
     return collision_tag;
 }
-bool World::calcu_color(R_values &R_v,int current_recursive_depth){
+bool World::calcu_color(R_values &R_v,Rays ray,int current_recursive_depth){
     Pixel p;
+    R_values In_v=R_v;
+    Entities *R_it = (Entities*)R_v.entity;
+    
     float R = 0,G = 0,B = 0;
-    if(current_recursive_depth==0){
+    if(current_recursive_depth==0||check_intersect(In_v, ray)==false){//R_v will be reset in this time;
+        //end recursive until aim depth or current ray can't hit any obj
         R_v.rgb[0] = R>1?1:R;R_v.rgb[1] = G>1?1:G;R_v.rgb[2] = B>1?1:B;
         return true;
+    }else{// recursively calculate reflection;
+        R_values R_v_recursive;
+        
+        Rays ray_reflection = R_it->get_reflection_ray(R_v);//input: viewpoint and hit point,output:ray
+        calcu_color(R_v_recursive, ray_reflection, current_recursive_depth-1);
+        //init rgb
+        float kr_r,kr_g,kr_b;
+        Entities *IN_it = (Entities*)In_v.entity;
+        IN_it->get_property_material(6, kr_r);
+        IN_it->get_property_material(7, kr_g);
+        IN_it->get_property_material(8, kr_b);
+        In_v.rgb[0] = kr_r*R_v_recursive.rgb[0];
+        In_v.rgb[1] = kr_g*R_v_recursive.rgb[1];
+        In_v.rgb[2] = kr_b*R_v_recursive.rgb[2];
     }
     //shading
-    Lights_pt L_header = Lgts;
-    while(L_header!=nullptr){
-        if(L_header->lgt_name==Lights::point_light){
-            calcu_rgb_under_lights(R,G,B,R_v,L_header,true);
+    std::list<Lights>::iterator it;
+    for(it=Lgts.begin();it!=Lgts.end();++it){
+        Rays ray = it->get_a_ray(In_v);//ray to light
+        R_values C_R;
+        bool visible_tag=false;
+        if(check_intersect(C_R, ray)==true){//C_R include obj,first intersect pos, min distance
+            //float dis = sqrt(pow(C_R.pos[0]-R_v.pos[0],2)+pow(C_R.pos[1]-R_v.pos[1],2)+pow(C_R.pos[2]-R_v.pos[2],2));
+            if(C_R.dis_in_t<0.0001&&C_R.entity==In_v.entity){//collision of point itself
+                visible_tag=true;
+            }
         }
-        else if(L_header->lgt_name==Lights::directional_light){// add the directional_light to the object
-            calcu_rgb_under_lights(R,G,B,R_v,L_header,false);
-        }
-        else if(L_header->lgt_name==Lights::ambient_light){// add the ambient_light to the object
-            float ar = R_v.obj->material[0];float ag = R_v.obj->material[1];float ab = R_v.obj->material[2];
-            R+=ar*L_header->lgt_parameters[0];
-            G+=ag*L_header->lgt_parameters[1];
-            B+=ab*L_header->lgt_parameters[2];
-        }
-        L_header = L_header->next;
-    }
-    //reflection:
-    R_values R_v2;
-    R_v2 = R_v;
-    Rays ray_reflect;
-    ray_reflect.Point[0] = R_v.pos[0];ray_reflect.Point[1] = R_v.pos[1];ray_reflect.Point[2] = R_v.pos[2];
-    //check_intersect(R, Ray[index_ray(i, j)]
-    calcu_color(R_v2,current_recursive_depth-1);//value saved in R_v
-    //Refrection:
-    
-    R_v.rgb[0] += R>1?1:R;R_v.rgb[1] += G>1?1:G;R_v.rgb[2] += B>1?1:B;
-    return true;
-}
-void World::calcu_rgb_under_lights(float &R,float &G,float &B,R_values R_v,Lights_pt L_header,bool delum_tag){
-    float dr = R_v.obj->material[3];float dg = R_v.obj->material[4];float db = R_v.obj->material[5];
-    float sr = R_v.obj->material[6];float sg = R_v.obj->material[7];float sb = R_v.obj->material[8];
-    float x = L_header->lgt_parameters[3],y = L_header->lgt_parameters[4],z = L_header->lgt_parameters[5];
-    R_values C_R;
-    Rays ray;
-    bool visible_tag = false;
-    // normal direction
-    // this ray is from light to point
-    if(delum_tag)
-        calcu_norm_vec(ray.Direction[0],ray.Direction[1],ray.Direction[2],
-                   R_v.pos[0],R_v.pos[1],R_v.pos[2],x,y,z);
-    else
-        calcu_norm_vec(ray.Direction[0],ray.Direction[1],ray.Direction[2],
-                       2*x,2*y,2*z,x,y,z);
-    ray.Point[0] = R_v.pos[0]+0.01*ray.Direction[0];
-    ray.Point[1] = R_v.pos[1]+0.01*ray.Direction[1];
-    ray.Point[2] = R_v.pos[2]+0.01*ray.Direction[2];
-    if(delum_tag)
-        ray.range = (x-R_v.pos[0])/ray.Direction[0];
-    else
-        ray.range = -1;
-    if(check_intersect(C_R, ray)==true){
-        float dis = sqrt(pow(C_R.pos[0]-R_v.pos[0],2)+pow(C_R.pos[1]-R_v.pos[1],2)+pow(C_R.pos[2]-R_v.pos[2],2));
-        if(dis<0.0001){//collision of itself
-            //G = 255;
+        else//no collision between light and obj
             visible_tag=true;
+        if(visible_tag){
+            In_v.viewpoint[0] = W_Settings.camera[0];In_v.viewpoint[1] = W_Settings.camera[1];In_v.viewpoint[2] = W_Settings.camera[2];
+            it->calcu_color(R, G, B, In_v);
         }
     }
-    else//no collision between light and obj
-        visible_tag=true;
-    if(visible_tag)// the object can see at least one light
-    {
-        float delum_factor;
-        if(delum_tag)
-            delum_factor = 1/(pow(R_v.pos[0]-x,2)+pow(R_v.pos[1]-y,2)+pow(R_v.pos[2]-z,2));
-        else
-            delum_factor = 1;
-        
-        //Lambertian shading
-        
-        float n[3];
-        calcu_norm_vec(n[0],n[1],n[2],
-                       R_v.obj->obj_parameters[0],R_v.obj->obj_parameters[1],R_v.obj->obj_parameters[2]
-                       ,R_v.pos[0],R_v.pos[1],R_v.pos[2]);
-        float delta_r,delta_g,delta_b,theta;
-        theta = 180*acos(n[0]*ray.Direction[0]+n[1]*ray.Direction[1]+n[2]*ray.Direction[2])/M_PI;
-        //printf("theta = %f\n",theta);
-        //printf("dr=%f dg=%f db=%f; lr=%f lg=%f lb=%f\n",dr,dg,db,L_header->lgt_parameters[0]
-        // ,L_header->lgt_parameters[1],L_header->lgt_parameters[2]);
-        delta_r = dr*delum_factor*L_header->lgt_parameters[0]*fmax(0,cos(M_PI*theta/180));
-        delta_g = dg*delum_factor*L_header->lgt_parameters[1]*fmax(0,cos(M_PI*theta/180));
-        delta_b = db*delum_factor*L_header->lgt_parameters[2]*fmax(0,cos(M_PI*theta/180));
-        R += delta_r;
-        G += delta_g;
-        B += delta_b;
-        //phong shading specularity
-        //Is_r = dr*I_r*dot(v,R)^n_
-        //R = I - 2*N*dot(I*N)
-        float v[3];
-        float R_[3];
-        float n_ = R_v.obj->material[9];
-        calcu_norm_vec(v[0],v[1],v[2],
-                       R_v.obj->obj_parameters[0],R_v.obj->obj_parameters[1],R_v.obj->obj_parameters[2]
-                       ,W_Settings.camera[0],W_Settings.camera[1],W_Settings.camera[2]);
-        float dot = (ray.Direction[0]*n[0]+ray.Direction[1]*n[1]+ray.Direction[2]*n[2]);
-        R_[0] = ray.Direction[0]-2*dot*n[0];
-        R_[1] = ray.Direction[1]-2*dot*n[1];
-        R_[2] = ray.Direction[2]-2*dot*n[2];
-        dot = pow(v[0]*R_[0]+v[1]*R_[1]+v[2]*R_[2],n_);
-        
-        R+=sr*delum_factor*L_header->lgt_parameters[0]*dot;
-        G+=sg*delum_factor*L_header->lgt_parameters[1]*dot;
-        B+=sb*delum_factor*L_header->lgt_parameters[2]*dot;
-    }
-    
+    R += In_v.rgb[0];
+    G += In_v.rgb[1];
+    B += In_v.rgb[2];
+    R_v.rgb[0] = R>1?1:R;R_v.rgb[1] = G>1?1:G;R_v.rgb[2] = B>1?1:B;
+    return true;
+
 }
 void World::calcu_norm_vec(float &rx,float &ry,float &rz,float sx,float sy,float sz,float dx,float dy,float dz){
     rx = dx-sx;ry = dy-sy;rz = dz-sz;
@@ -603,7 +376,7 @@ bool World::save_img(){
     img->Write(out_name);
     return true;
 }
-string World::get_imagename(){
+std::string World::get_imagename(){
     return W_Settings.output_image;
 }
 World_Setting World::get_worldSetting(){
@@ -666,35 +439,4 @@ bool cross_3(float *d,float *u,float *v){
 }
 int World::index_ray(int x_index,int y_index){//x: 0~width,y: 0~height
     return x_index*W_Settings.film_resolution[1]+y_index;
-}
-World::~World(){
-    delete img;
-    img=nullptr;
-//    World_Setting W_Settings;
-    delete Ray;
-    Ray=nullptr;
-    delete Scn;
-    Scn=nullptr;
-    if(Objs!=nullptr){
-        W_Objects_pt tail,head=Objs;
-        do {
-            tail = head->next;
-            head->next = nullptr;
-            delete head->obj_parameters;
-            delete head;
-            head = tail;
-        }while(tail!=nullptr);
-        Objs = nullptr;
-    }
-    if(Lgts!=nullptr){
-        Lights_pt tail,head=Lgts;
-        do {
-            tail = head->next;
-            head->next = nullptr;
-            delete head->lgt_parameters;
-            delete head;
-            head = tail;
-        }while(tail!=nullptr);
-        Lgts = nullptr;
-    }
 }

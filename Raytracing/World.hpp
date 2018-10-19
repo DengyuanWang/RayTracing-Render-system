@@ -10,28 +10,24 @@
 #define World_hpp
 
 
-#include <stdio.h>
-#include <cstdio>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <math.h>
+
 #include "image.h"
 #include "pixel.h"
 #include "Default_setting.h"
 #include "Entities.hpp"
 #include "Lights.hpp"
 
+
 class World {
     Image *img=nullptr;
     World_Setting W_Settings;
     Ray_p Ray=nullptr;
     Screen_p Scn=nullptr;
-    std::list <Entities> Entity;
+    std::list <Entities> Ets;
     std::list <Lights> Lgts;
 public:
     World(std::string);
-    //add wall and ground to the world;
+//add wall and ground to the world;
     bool build_world();
     bool add_plane(float x,float y,float z,float dx,float dy,float dz);
 //load setting and generate world
@@ -47,8 +43,8 @@ public:
 //ray tracing
     bool ray_tracing();
     bool check_intersect(R_values &R,Rays ray);
-    bool calcu_color(R_values &R,int current_recursive_depth);
-    void calcu_rgb_under_lights(float &R,float &G,float &B,R_values R_v,Lights_pt L_header,bool delum_tag);
+    bool calcu_color(R_values &R,Rays ray,int current_recursive_depth);
+    void calcu_rgb_under_lights(float &R,float &G,float &B,R_values R_v,int lgt_index,bool delum_tag);
     void calcu_norm_vec(float &rx,float &ry,float &rz,float sx,float sy,float sz,float dx,float dy,float dz);
     
     bool generate_img(float sx,float sy);
@@ -56,7 +52,6 @@ public:
     bool Enlarge_resolution(float sx,float sy);
     bool save_img();
     World_Setting get_worldSetting();
-    ~World();
 };
 
 #endif /* World_hpp */
