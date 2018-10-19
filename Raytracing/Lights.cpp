@@ -53,7 +53,9 @@ bool Lights::set_lgt_parameter(int index,float value){
     return true;
 }
 bool Lights::calcu_color(float &R,float &G,float &B,R_values R_v){
-    
+    R_v.rgb[0] = 0;
+    R_v.rgb[1] = 0;
+    R_v.rgb[2] = 0;
     bool delum_tag=true;
     Entities *it = (Entities*)R_v.entity;
     switch (lgt_name) {
@@ -80,7 +82,7 @@ bool Lights::calcu_color(float &R,float &G,float &B,R_values R_v){
          delum_tag=false;
     else delum_tag=true;
     Lambertian_shading(R_v);//add rgb to R_v
-    specularity_shading_phong(R_v);//add rgb to R_v
+    specularity_shading_phong(R_v);//add rgb to R_v; error
     R = R_v.rgb[0];
     G = R_v.rgb[1];
     B = R_v.rgb[2];
@@ -128,7 +130,7 @@ void Lights::Lambertian_shading(R_values &R_v){
     Rays OP;
     OP = it->get_normal_vec(R_v.pos);
     n[0] = OP.Direction[0];n[1] = OP.Direction[1];n[2] = OP.Direction[2];
-    Rays ray = get_a_ray(R_v);
+    Rays ray = get_a_ray(R_v);//get a ray from hit point to light
     float delta_r,delta_g,delta_b,theta;
     theta = 180*acos(n[0]*ray.Direction[0]+n[1]*ray.Direction[1]+n[2]*ray.Direction[2])/M_PI;
     //printf("theta = %f\n",theta);
@@ -155,23 +157,25 @@ void Lights::specularity_shading_phong(R_values &R_v){
     if(lgt_name==lgt_name::directional_light)
         delum_tag = false;
     //phong shading specularity
-    //Is_r = dr*I_r*dot(v,R)^n_
+    //Is_r = sr*I_r*dot(v,R)^n_
     //R = I - 2*N*dot(I*N)
     float v[3],n[3],R_[3];//view,normal,reflection
     float n_;//power factor
-    it->get_property_material(9, n_);
-    Rays OP;
-    OP = it->get_normal_vec(R_v.pos);
-    n[0] = OP.Direction[0];n[1] = OP.Direction[1];n[2] = OP.Direction[2];
+    it->get_property_material(9, n_);//get power factor
+    Rays norm;
+    norm = it->get_normal_vec(R_v.pos);//got norm
+    n[0] = norm.Direction[0];n[1] = norm.Direction[1];n[2] = norm.Direction[2];
     
-    Rays ray=get_a_ray(R_v);
+    Rays ray=get_a_ray(R_v);//from point to light
+    ray.Direction[0] = -ray.Direction[0];ray.Direction[1] = -ray.Direction[1];ray.Direction[2] = -ray.Direction[2];//flip direction
     calcu_norm_vec(v[0],v[1],v[2],
                    R_v.pos[0],R_v.pos[1],R_v.pos[2]
-                   ,R_v.viewpoint[0],R_v.viewpoint[0],R_v.viewpoint[0]);
+                   ,R_v.viewpoint[0],R_v.viewpoint[1],R_v.viewpoint[2]);//a vector from pos to viewpoint
     float dot = (ray.Direction[0]*n[0]+ray.Direction[1]*n[1]+ray.Direction[2]*n[2]);
     R_[0] = ray.Direction[0]-2*dot*n[0];
     R_[1] = ray.Direction[1]-2*dot*n[1];
     R_[2] = ray.Direction[2]-2*dot*n[2];
+    
     dot = pow(v[0]*R_[0]+v[1]*R_[1]+v[2]*R_[2],n_);
 
     

@@ -74,7 +74,7 @@ Rays Entities::get_reflection_ray(R_values R_v){
     Rays norm = get_normal_vec(R_v.pos);
     Rays ori_ray,reflect_ray;
     calcu_norm_vec(ori_ray.Direction[0],ori_ray.Direction[1],ori_ray.Direction[2],
-                    R_v.viewpoint[0],R_v.viewpoint[0],R_v.viewpoint[0],
+                    R_v.viewpoint[0],R_v.viewpoint[1],R_v.viewpoint[2],
                             R_v.pos[0],R_v.pos[1],R_v.pos[2]);
 
     float dot = (ori_ray.Direction[0]*norm.Direction[0]+

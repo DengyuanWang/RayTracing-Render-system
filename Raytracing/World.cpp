@@ -220,17 +220,10 @@ bool World::ray_tracing(){
             }
             R_values R;
             if(check_intersect(R, Ray[index_ray(i, j)])==true){//R include objname, first intersect pos
-                /*
-                Entities *IN_it;
-                IN_it =(Entities *) R.entity;
-                IN_it->get_property_material(0, R.rgb[0]);
-                IN_it->get_property_material(1, R.rgb[1]);
-                IN_it->get_property_material(2, R.rgb[2]);
-                */
                 R.viewpoint[0] = W_Settings.camera[0];//set viewpoint to camera pos
                 R.viewpoint[1] = W_Settings.camera[1];
                 R.viewpoint[2] = W_Settings.camera[2];
-                W_Settings.max_depth = 1;
+    //            W_Settings.max_depth = 1;
                 calcu_color(R,Ray[index_ray(i, j)],W_Settings.max_depth);
                 Scn[index_ray(i, j)].rgb[0] = R.rgb[0]*255;
                 Scn[index_ray(i, j)].rgb[1] = R.rgb[1]*255;
@@ -262,8 +255,12 @@ bool World::check_intersect(R_values &R, Rays ray){//ray collision check
     }
     return collision_tag;
 }
-bool World::calcu_color(R_values &R_v,Rays ray,int current_recursive_depth){
-    R_values In_v=R_v;
+bool World::calcu_color(R_values &R_v,Rays ray,int current_recursive_depth){//return rgb and distance
+    //if(current_recursive_depth!=W_Settings.max_depth)
+        //printf("depth %d\n",current_recursive_depth);
+    float hit_point[3];
+    hit_point[0] = R_v.pos[0];hit_point[1] = R_v.pos[1];hit_point[2] = R_v.pos[2];
+    R_values In_v=R_v;//seperate input values and return values
     float kr_r,kr_g,kr_b;
     Entities *IN_it;
     IN_it = (Entities*)In_v.entity;
@@ -282,19 +279,18 @@ bool World::calcu_color(R_values &R_v,Rays ray,int current_recursive_depth){
         R_v.dis_in_t = -1;
         return true;
     }
-    
     // recursively calculate reflection;
-    R_v.dis_in_t = In_v.dis_in_t;
-    
     ray_reflection = IN_it->get_reflection_ray(R_v);//input: viewpoint and hit point,output:ray
     if(check_intersect(R_v_recursive, ray_reflection)==true){//if reflection ray hit something
         R_v_recursive.viewpoint[0] = R_v.pos[0];//set new view point to reflection point
         R_v_recursive.viewpoint[1] = R_v.pos[1];
         R_v_recursive.viewpoint[2] = R_v.pos[2];
+        float distance = R_v_recursive.dis_in_t;//distance saved from check_intersection
         calcu_color(R_v_recursive, ray_reflection, current_recursive_depth-1);
         //init rgb
-        if(R_v_recursive.dis_in_t>0){
-            delum_factor = delum_factor/fmin(pow(R_v_recursive.dis_in_t,2),1);
+        if(distance>0){
+        //    delum_factor = delum_factor/pow(distance,1);
+          // printf("distance: %f\n",distance);
         }
     }
     else{
@@ -305,13 +301,15 @@ bool World::calcu_color(R_values &R_v,Rays ray,int current_recursive_depth){
     In_v.rgb[0] = kr_r*delum_factor*R_v_recursive.rgb[0];
     In_v.rgb[1] = kr_g*delum_factor*R_v_recursive.rgb[1];
     In_v.rgb[2] = kr_b*delum_factor*R_v_recursive.rgb[2];
-    //if(In_v.rgb[0]-0>0.001)
-      //  In_v.rgb[0]=0;
+    //In_v.rgb[0] = 0;In_v.rgb[1]=0;In_v.rgb[2]=0;
+ 
+    //printf("depth:%d reflect light rgb:%f %f %f\n",current_recursive_depth,In_v.rgb[0],In_v.rgb[1],In_v.rgb[2]);
+    
     //shading
     std::list<Lights>::iterator it;
     for(it=Lgts.begin();it!=Lgts.end();++it){
         std::string name = it->get_lgt_name();
-      //  if(name=="point_light")
+        //if(name=="point_light")
         //    continue;
         Rays ray = it->get_a_ray(In_v);//ray to light
         R_values C_R;
@@ -328,19 +326,30 @@ bool World::calcu_color(R_values &R_v,Rays ray,int current_recursive_depth){
                 visible_tag=true;
         }
         if(visible_tag){
-           
-            R = 0;G = 0; B = 0;
             it->calcu_color(R, G, B, In_v);
             In_v.rgb[0] += R;
             In_v.rgb[1] += G;
             In_v.rgb[2] += B;
         }
     }
+    //if(current_recursive_depth!=W_Settings.max_depth)
+    //    printf("depth:%d reflect light rgb:%f %f %f\n",current_recursive_depth,In_v.rgb[0],In_v.rgb[1],In_v.rgb[2]);
+    
+    
     R = In_v.rgb[0]<0?0:In_v.rgb[0];//makes them larger than 0
     G = In_v.rgb[1]<0?0:In_v.rgb[1];
     B = In_v.rgb[2]<0?0:In_v.rgb[2];
     R_v.rgb[0] = R>1?1:R;R_v.rgb[1] = G>1?1:G;R_v.rgb[2] = B>1?1:B;//makers them smaller than 1
-
+    //set others to 0/null
+    R_v.dir[0]=0;R_v.dir[1]=0;R_v.dir[2]=0;
+    R_v.pos[0]=0;R_v.pos[1]=0;R_v.pos[2]=0;
+    R_v.entity=nullptr;
+    R_v.lgt = nullptr;
+    R_v.viewpoint[0]=0;R_v.viewpoint[1]=0;R_v.viewpoint[2]=0;
+    R_v.dis_in_t = 0;
+   // if(current_recursive_depth!=W_Settings.max_depth)
+     //   printf("depth:%d reflect light rgb:%f %f %f\n",current_recursive_depth,R_v.rgb[0],R_v.rgb[1],R_v.rgb[2]);
+    
     return true;
 
 }
