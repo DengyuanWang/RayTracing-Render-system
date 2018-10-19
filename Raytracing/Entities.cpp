@@ -21,9 +21,11 @@ std::string Entities::get_entity_name(){
 bool Entities::set_entity_name(std::string name){
     if(name=="sphere"){
         entity_name =obj_name::sphere;
+        parameter_num = 4;
         return true;
     }else if (name=="triangle"){
         entity_name =obj_name::triangle;
+        parameter_num = 30;
         return true;
     }else{
         return false;

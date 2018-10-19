@@ -88,13 +88,13 @@
 		7610E46E216C3A730057028D /* Raytracing */ = {
 			isa = PBXGroup;
 			children = (
+				769BAA65217527EA00C2B060 /* main.cpp */,
 				7610E486216D8C3B0057028D /* World.cpp */,
 				76B991152178023A00D287F2 /* Lights.cpp */,
 				76B991162178023A00D287F2 /* Lights.hpp */,
 				76B991122177FFF900D287F2 /* Entities.cpp */,
 				76B991132177FFF900D287F2 /* Entities.hpp */,
 				7610E487216D8C3B0057028D /* World.hpp */,
-				769BAA65217527EA00C2B060 /* main.cpp */,
 				7610E483216D8BDF0057028D /* Interface.cpp */,
 				7610E484216D8BDF0057028D /* Interface.hpp */,
 				7610E490216D8DB80057028D /* stb_image_write.h */,

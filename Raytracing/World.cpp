@@ -165,42 +165,6 @@ bool World::add_sphere(float x,float y,float z,float r){
         tmp.set_property_material(i,  W_Settings.material[i]);
     Ets.push_front(tmp);
     return true;
-    /*
-    W_Objects_pt O_pt=nullptr,pt_head=Objs;
-    if (pt_head==nullptr)//not W_Objects yet
-    {
-        Objs = new W_Objects;
-        Objs->obj_name = W_Objects::sphere;
-        for(int i=0;i<14;i++)
-            Objs->material[i] = W_Settings.material[i];
-        Objs->obj_parameters = new float[4];
-        Objs->obj_parameters[0] = x;
-        Objs->obj_parameters[1] = y;
-        Objs->obj_parameters[2] = z;
-        Objs->obj_parameters[3] = r;
-        Objs->next = nullptr;
-        return true;
-    }else{//at least one object
-        O_pt = pt_head->next;
-        while(O_pt!=nullptr){
-            pt_head = O_pt;
-            O_pt = O_pt->next;
-        }
-        O_pt = nullptr;
-        O_pt = new W_Objects;
-        O_pt->obj_name = W_Objects::sphere;
-        for(int i=0;i<sizeof(W_Settings.material);i++)
-            O_pt->material[i] = W_Settings.material[i];
-        O_pt->obj_parameters = nullptr;
-        O_pt->obj_parameters = new float[4];
-        O_pt->obj_parameters[0] = x;
-        O_pt->obj_parameters[1] = y;
-        O_pt->obj_parameters[2] = z;
-        O_pt->obj_parameters[3] = r;
-        O_pt->next = nullptr;
-        pt_head->next = O_pt;
-        return true;
-    }*/
 }
 bool World::add_directional_light(float r,float g,float b,float x,float y,float z){
     //point_light r, g, b, x, y, z
@@ -256,6 +220,17 @@ bool World::ray_tracing(){
             }
             R_values R;
             if(check_intersect(R, Ray[index_ray(i, j)])==true){//R include objname, first intersect pos
+                /*
+                Entities *IN_it;
+                IN_it =(Entities *) R.entity;
+                IN_it->get_property_material(0, R.rgb[0]);
+                IN_it->get_property_material(1, R.rgb[1]);
+                IN_it->get_property_material(2, R.rgb[2]);
+                */
+                R.viewpoint[0] = W_Settings.camera[0];//set viewpoint to camera pos
+                R.viewpoint[1] = W_Settings.camera[1];
+                R.viewpoint[2] = W_Settings.camera[2];
+                W_Settings.max_depth = 1;
                 calcu_color(R,Ray[index_ray(i, j)],W_Settings.max_depth);
                 Scn[index_ray(i, j)].rgb[0] = R.rgb[0]*255;
                 Scn[index_ray(i, j)].rgb[1] = R.rgb[1]*255;
@@ -271,68 +246,101 @@ bool World::ray_tracing(){
     return true;
 }
 bool World::check_intersect(R_values &R, Rays ray){//ray collision check
-
+    R.dis_in_t = -1;
     R_values T_r;
     bool collision_tag = false;
     float t=-1;
     for(std::list<Entities>::iterator it=Ets.begin();it!=Ets.end();++it){
-        collision_tag = collision_tag||it->check_intersect(T_r, ray);
-        if(t>T_r.dis_in_t){
-            R=T_r;
-            R.entity = &(*it);
-            t = T_r.dis_in_t;
+        if(it->check_intersect(T_r, ray)){//return pos, distance
+            if(t>T_r.dis_in_t||collision_tag ==false){//if nearer
+                R=T_r;
+                R.entity = (void*)&(*it);
+                t = T_r.dis_in_t;
+            }
+            collision_tag = true;
         }
     }
     return collision_tag;
 }
 bool World::calcu_color(R_values &R_v,Rays ray,int current_recursive_depth){
-    Pixel p;
     R_values In_v=R_v;
-    Entities *R_it = (Entities*)R_v.entity;
-    
+    float kr_r,kr_g,kr_b;
+    Entities *IN_it;
+    IN_it = (Entities*)In_v.entity;
+    IN_it->get_property_material(6, kr_r);
+    IN_it->get_property_material(7, kr_g);
+    IN_it->get_property_material(8, kr_b);
+    float delum_factor=1;
+    R_values R_v_recursive;
+    Rays ray_reflection;//input: viewpoint and hit point,output:ray
     float R = 0,G = 0,B = 0;
-    if(current_recursive_depth==0||check_intersect(In_v, ray)==false){//R_v will be reset in this time;
+    if(current_recursive_depth==0){//R_v will be reset in this time
         //end recursive until aim depth or current ray can't hit any obj
-        R_v.rgb[0] = R>1?1:R;R_v.rgb[1] = G>1?1:G;R_v.rgb[2] = B>1?1:B;
+        R_v.rgb[0] = W_Settings.background[0];
+        R_v.rgb[1] = W_Settings.background[1];
+        R_v.rgb[2] = W_Settings.background[2];
+        R_v.dis_in_t = -1;
         return true;
-    }else{// recursively calculate reflection;
-        R_values R_v_recursive;
-        
-        Rays ray_reflection = R_it->get_reflection_ray(R_v);//input: viewpoint and hit point,output:ray
+    }
+    
+    // recursively calculate reflection;
+    R_v.dis_in_t = In_v.dis_in_t;
+    
+    ray_reflection = IN_it->get_reflection_ray(R_v);//input: viewpoint and hit point,output:ray
+    if(check_intersect(R_v_recursive, ray_reflection)==true){//if reflection ray hit something
+        R_v_recursive.viewpoint[0] = R_v.pos[0];//set new view point to reflection point
+        R_v_recursive.viewpoint[1] = R_v.pos[1];
+        R_v_recursive.viewpoint[2] = R_v.pos[2];
         calcu_color(R_v_recursive, ray_reflection, current_recursive_depth-1);
         //init rgb
-        float kr_r,kr_g,kr_b;
-        Entities *IN_it = (Entities*)In_v.entity;
-        IN_it->get_property_material(6, kr_r);
-        IN_it->get_property_material(7, kr_g);
-        IN_it->get_property_material(8, kr_b);
-        In_v.rgb[0] = kr_r*R_v_recursive.rgb[0];
-        In_v.rgb[1] = kr_g*R_v_recursive.rgb[1];
-        In_v.rgb[2] = kr_b*R_v_recursive.rgb[2];
+        if(R_v_recursive.dis_in_t>0){
+            delum_factor = delum_factor/fmin(pow(R_v_recursive.dis_in_t,2),1);
+        }
     }
+    else{
+        R_v_recursive.rgb[0] = W_Settings.background[0];
+        R_v_recursive.rgb[1] = W_Settings.background[1];
+        R_v_recursive.rgb[2] = W_Settings.background[2];
+    }
+    In_v.rgb[0] = kr_r*delum_factor*R_v_recursive.rgb[0];
+    In_v.rgb[1] = kr_g*delum_factor*R_v_recursive.rgb[1];
+    In_v.rgb[2] = kr_b*delum_factor*R_v_recursive.rgb[2];
+    //if(In_v.rgb[0]-0>0.001)
+      //  In_v.rgb[0]=0;
     //shading
     std::list<Lights>::iterator it;
     for(it=Lgts.begin();it!=Lgts.end();++it){
+        std::string name = it->get_lgt_name();
+      //  if(name=="point_light")
+        //    continue;
         Rays ray = it->get_a_ray(In_v);//ray to light
         R_values C_R;
-        bool visible_tag=false;
-        if(check_intersect(C_R, ray)==true){//C_R include obj,first intersect pos, min distance
-            //float dis = sqrt(pow(C_R.pos[0]-R_v.pos[0],2)+pow(C_R.pos[1]-R_v.pos[1],2)+pow(C_R.pos[2]-R_v.pos[2],2));
-            if(C_R.dis_in_t<0.0001&&C_R.entity==In_v.entity){//collision of point itself
-                visible_tag=true;
+        bool visible_tag=true;
+        if(round(ray.range)!=-2){// if it's not ambient light,then check visibility
+            visible_tag = false;
+            if(check_intersect(C_R, ray)==true){//C_R include obj,first intersect pos, min distance
+                //float dis = sqrt(pow(C_R.pos[0]-R_v.pos[0],2)+pow(C_R.pos[1]-R_v.pos[1],2)+pow(C_R.pos[2]-R_v.pos[2],2));
+                if(C_R.dis_in_t<0.0001&&C_R.entity==In_v.entity){//collision of point itself
+                    visible_tag=true;
+                }
             }
+            else//no collision between light and obj
+                visible_tag=true;
         }
-        else//no collision between light and obj
-            visible_tag=true;
         if(visible_tag){
-            In_v.viewpoint[0] = W_Settings.camera[0];In_v.viewpoint[1] = W_Settings.camera[1];In_v.viewpoint[2] = W_Settings.camera[2];
+           
+            R = 0;G = 0; B = 0;
             it->calcu_color(R, G, B, In_v);
+            In_v.rgb[0] += R;
+            In_v.rgb[1] += G;
+            In_v.rgb[2] += B;
         }
     }
-    R += In_v.rgb[0];
-    G += In_v.rgb[1];
-    B += In_v.rgb[2];
-    R_v.rgb[0] = R>1?1:R;R_v.rgb[1] = G>1?1:G;R_v.rgb[2] = B>1?1:B;
+    R = In_v.rgb[0]<0?0:In_v.rgb[0];//makes them larger than 0
+    G = In_v.rgb[1]<0?0:In_v.rgb[1];
+    B = In_v.rgb[2]<0?0:In_v.rgb[2];
+    R_v.rgb[0] = R>1?1:R;R_v.rgb[1] = G>1?1:G;R_v.rgb[2] = B>1?1:B;//makers them smaller than 1
+
     return true;
 
 }
