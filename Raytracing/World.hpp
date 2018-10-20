@@ -43,7 +43,10 @@ public:
 //ray tracing
     bool ray_tracing();
     bool check_intersect(R_values &R,Rays ray);
-    bool calcu_color(R_values &R,Rays ray,int current_recursive_depth);
+    bool calcu_color(float RGB[3],R_values R,Rays ray,int current_recursive_depth);
+    bool calcu_refl_color(float RGB[3],R_values R_v,Rays ray,int current_recursive_depth);
+    bool calcu_refra_color(float RGB[3],R_values R_v,Rays ray,int current_recursive_depth);
+    bool calcu_other_color(float RGB[3],R_values R_v,Rays ray);
     void calcu_rgb_under_lights(float &R,float &G,float &B,R_values R_v,int lgt_index,bool delum_tag);
     void calcu_norm_vec(float &rx,float &ry,float &rz,float sx,float sy,float sz,float dx,float dy,float dz);
     

@@ -223,11 +223,13 @@ bool World::ray_tracing(){
                 R.viewpoint[0] = W_Settings.camera[0];//set viewpoint to camera pos
                 R.viewpoint[1] = W_Settings.camera[1];
                 R.viewpoint[2] = W_Settings.camera[2];
-    //            W_Settings.max_depth = 1;
-                calcu_color(R,Ray[index_ray(i, j)],W_Settings.max_depth);
-                Scn[index_ray(i, j)].rgb[0] = R.rgb[0]*255;
-                Scn[index_ray(i, j)].rgb[1] = R.rgb[1]*255;
-                Scn[index_ray(i, j)].rgb[2] = R.rgb[2]*255;
+                
+                W_Settings.max_depth = 5;
+                //input entity_it,viewpoint,hitpoint
+                calcu_color(Scn[index_ray(i, j)].rgb, R,Ray[index_ray(i, j)],W_Settings.max_depth);
+                Scn[index_ray(i, j)].rgb[0] *= 255;
+                Scn[index_ray(i, j)].rgb[1] *= 255;
+                Scn[index_ray(i, j)].rgb[2] *= 255;
             }else{
                 Scn[index_ray(i, j)].rgb[0] = W_Settings.background[0]*255;
                 Scn[index_ray(i, j)].rgb[1] = W_Settings.background[1]*255;
@@ -255,103 +257,144 @@ bool World::check_intersect(R_values &R, Rays ray){//ray collision check
     }
     return collision_tag;
 }
-bool World::calcu_color(R_values &R_v,Rays ray,int current_recursive_depth){//return rgb and distance
-    //if(current_recursive_depth!=W_Settings.max_depth)
-        //printf("depth %d\n",current_recursive_depth);
-    float hit_point[3];
+bool World::calcu_color(float RGB[3],R_values R_v,Rays input_ray,int current_recursive_depth){
+    //return: rgb,   input: entity pointer, viewpoint, hitpoint,
+    //get input values from R_v;
+    float hit_point[3],view_point[3];
+    Entities *entity_it;
+    entity_it = (Entities*)R_v.entity;
     hit_point[0] = R_v.pos[0];hit_point[1] = R_v.pos[1];hit_point[2] = R_v.pos[2];
-    R_values In_v=R_v;//seperate input values and return values
+    view_point[0] = R_v.viewpoint[0];view_point[1] = R_v.viewpoint[1];view_point[2] = R_v.viewpoint[2];
+    float RGB_refl[3]={0,0,0},RGB_refr[3]={0,0,0},RGB_other[3]={0,0,0};
+    R_values R_v1,R_v2,R_v3;
+    R_v1 = R_v;R_v2 = R_v;R_v3 = R_v;
+    
+    calcu_refl_color(RGB_refl,  R_v1, input_ray, current_recursive_depth);
+    calcu_refra_color(RGB_refr, R_v2, input_ray, current_recursive_depth);
+    calcu_other_color(RGB_other,R_v3, input_ray);
+    
+    //return rgb
+    //RGB_refl[0] = 0;RGB_refl[1]=0;RGB_refl[2]=0;
+    RGB[0] = RGB_other[0]+RGB_refl[0]+RGB_refr[0];
+    RGB[1] = RGB_other[1]+RGB_refl[1]+RGB_refr[1];
+    RGB[2] = RGB_other[2]+RGB_refl[2]+RGB_refr[2];
+    RGB[0] = RGB[0]<0?0:(RGB[0]>1?1:RGB[0]);
+    RGB[1] = RGB[1]<0?0:(RGB[1]>1?1:RGB[1]);
+    RGB[2] = RGB[2]<0?0:(RGB[2]>1?1:RGB[2]);
+    return true;
+
+}
+bool World::calcu_refl_color(float RGB[3], R_values R_v,Rays input_ray,int current_recursive_depth){
+    //return: rgb,   input: entity pointer, viewpoint, hitpoint,
+    //get input values from R_v;
+    float hit_point[3],view_point[3];
+    Entities *entity_it;
+    entity_it = (Entities*)R_v.entity;
+    hit_point[0] = R_v.pos[0];hit_point[1] = R_v.pos[1];hit_point[2] = R_v.pos[2];
+    view_point[0] = R_v.viewpoint[0];view_point[1] = R_v.viewpoint[1];view_point[2] = R_v.viewpoint[2];
+    RGB[0] = 0;RGB[1] = 0;RGB[2] = 0;
     float kr_r,kr_g,kr_b;
-    Entities *IN_it;
-    IN_it = (Entities*)In_v.entity;
-    IN_it->get_property_material(6, kr_r);
-    IN_it->get_property_material(7, kr_g);
-    IN_it->get_property_material(8, kr_b);
-    float delum_factor=1;
-    R_values R_v_recursive;
-    Rays ray_reflection;//input: viewpoint and hit point,output:ray
-    float R = 0,G = 0,B = 0;
+    entity_it->get_property_material(6, kr_r);
+    entity_it->get_property_material(7, kr_g);
+    entity_it->get_property_material(8, kr_b);
     if(current_recursive_depth==0){//R_v will be reset in this time
-        //end recursive until aim depth or current ray can't hit any obj
-        R_v.rgb[0] = W_Settings.background[0];
-        R_v.rgb[1] = W_Settings.background[1];
-        R_v.rgb[2] = W_Settings.background[2];
-        R_v.dis_in_t = -1;
+        //end recursive until aim depth been reached or current ray can't hit any obj
+        RGB[0] = W_Settings.background[0];RGB[1] = W_Settings.background[1];RGB[2] = W_Settings.background[2];
+        //printf("rgb[0]:%f in calcu_refl color\n",RGB[0]);
         return true;
     }
-    // recursively calculate reflection;
-    ray_reflection = IN_it->get_reflection_ray(R_v);//input: viewpoint and hit point,output:ray
-    if(check_intersect(R_v_recursive, ray_reflection)==true){//if reflection ray hit something
-        R_v_recursive.viewpoint[0] = R_v.pos[0];//set new view point to reflection point
+    //recursively calculate reflection;
+    R_values R_v_recursive;
+    Rays ray_reflection;//shoot out from hit point
+    ray_reflection = entity_it->get_reflection_ray(input_ray, hit_point);//input: viewpoint and hit point,output:ray
+    float RGB_recursive[3]={0,0,0};
+    float distance=0;
+    
+    if(check_intersect(R_v_recursive, ray_reflection)==true){//error in reflection
+        //check wether the reflection ray could hit something or not
+        R_v_recursive.viewpoint[0] = R_v.pos[0];//set new view point as current hit point
         R_v_recursive.viewpoint[1] = R_v.pos[1];
         R_v_recursive.viewpoint[2] = R_v.pos[2];
-        float distance = R_v_recursive.dis_in_t;//distance saved from check_intersection
-        calcu_color(R_v_recursive, ray_reflection, current_recursive_depth-1);
+        //entitiy pointer and hitpoint are already saved in R_v_recursive
+        distance = R_v_recursive.dis_in_t;//presave the distance, since it would be removed in calcu_color().
+        calcu_color(RGB_recursive , R_v_recursive, ray_reflection, current_recursive_depth-1);
         //init rgb
-        if(distance>0){
-        //    delum_factor = delum_factor/pow(distance,1);
-          // printf("distance: %f\n",distance);
-        }
+        //RGB_recursive[0] = 255;
+        //RGB_recursive[1] = 255;
+        //RGB_recursive[2] = 255;
     }
     else{
-        R_v_recursive.rgb[0] = W_Settings.background[0];
-        R_v_recursive.rgb[1] = W_Settings.background[1];
-        R_v_recursive.rgb[2] = W_Settings.background[2];
+        RGB_recursive[0] = W_Settings.background[0];
+        RGB_recursive[1] = W_Settings.background[1];
+        RGB_recursive[2] = W_Settings.background[2];
     }
-    In_v.rgb[0] = kr_r*delum_factor*R_v_recursive.rgb[0];
-    In_v.rgb[1] = kr_g*delum_factor*R_v_recursive.rgb[1];
-    In_v.rgb[2] = kr_b*delum_factor*R_v_recursive.rgb[2];
-    //In_v.rgb[0] = 0;In_v.rgb[1]=0;In_v.rgb[2]=0;
- 
-    //printf("depth:%d reflect light rgb:%f %f %f\n",current_recursive_depth,In_v.rgb[0],In_v.rgb[1],In_v.rgb[2]);
+    float delum_factor = 1;//deluminate factor for reflection
+    RGB[0] = kr_r*delum_factor*RGB_recursive[0];
+    RGB[1] = kr_g*delum_factor*RGB_recursive[1];
+    RGB[2] = kr_b*delum_factor*RGB_recursive[2];
+   
+    RGB[0] = RGB[0]<0?0:(RGB[0]>1?1:RGB[0]);
+    RGB[1] = RGB[1]<0?0:(RGB[1]>1?1:RGB[1]);
+    RGB[2] = RGB[2]<0?0:(RGB[2]>1?1:RGB[2]);
+    if(isnan(RGB[0])||isnan(RGB[1])||isnan(RGB[2])){
+        printf("reflection: rgb: %f %f %f\n",RGB[0],RGB[1],RGB[2]);
+    }
     
+    return true;
+}
+bool World::calcu_refra_color(float RGB[3],R_values R_v,Rays ray,int current_recursive_depth){
+    RGB[0] = 0;RGB[1] = 0;RGB[2] = 0;
+    RGB[0] = RGB[0]<0?0:(RGB[0]>1?1:RGB[0]);
+    RGB[1] = RGB[1]<0?0:(RGB[1]>1?1:RGB[1]);
+    RGB[2] = RGB[2]<0?0:(RGB[2]>1?1:RGB[2]);
+    //printf("rgb[0]: %fin calcu_refr color\n",RGB[0]);
+    return true;
+}
+bool World::calcu_other_color(float RGB[3], R_values R_v,Rays input_ray){
+    //get input values from R_v;
+    RGB[0] = 0;RGB[1] = 0;RGB[2] = 0;
+    float hit_point[3],view_point[3];
+    Entities *entity_it;
+    entity_it = (Entities*)R_v.entity;
+    hit_point[0] = R_v.pos[0];hit_point[1] = R_v.pos[1];hit_point[2] = R_v.pos[2];
+    view_point[0] = R_v.viewpoint[0];view_point[1] = R_v.viewpoint[1];view_point[2] = R_v.viewpoint[2];
+    //SET other variants
     //shading
     std::list<Lights>::iterator it;
     for(it=Lgts.begin();it!=Lgts.end();++it){
         std::string name = it->get_lgt_name();
-        //if(name=="point_light")
-        //    continue;
-        Rays ray = it->get_a_ray(In_v);//ray to light
+        Rays ray = it->get_a_ray(hit_point);//ray to light
         R_values C_R;
         bool visible_tag=true;
         if(round(ray.range)!=-2){// if it's not ambient light,then check visibility
             visible_tag = false;
-            if(check_intersect(C_R, ray)==true){//C_R include obj,first intersect pos, min distance
-                //float dis = sqrt(pow(C_R.pos[0]-R_v.pos[0],2)+pow(C_R.pos[1]-R_v.pos[1],2)+pow(C_R.pos[2]-R_v.pos[2],2));
-                if(C_R.dis_in_t<0.0001&&C_R.entity==In_v.entity){//collision of point itself
+            if(check_intersect(C_R, ray)==true)//C_R include obj,first intersect pos, min distance
+            {    //float dis = sqrt(pow(C_R.pos[0]-R_v.pos[0],2)+pow(C_R.pos[1]-R_v.pos[1],2)+pow(C_R.pos[2]-R_v.pos[2],2));
+                if(C_R.dis_in_t<0.0001&&(void*)C_R.entity==(void*)entity_it)//collision of point itself
                     visible_tag=true;
-                }
             }
             else//no collision between light and obj
                 visible_tag=true;
         }
         if(visible_tag){
-            it->calcu_color(R, G, B, In_v);
-            In_v.rgb[0] += R;
-            In_v.rgb[1] += G;
-            In_v.rgb[2] += B;
+            float tmp_RGB[3]={0,0,0};
+            //printf("color viewpoint: %f %f %f\n",view_point[0],view_point[1],view_point[2]);
+            it->calcu_color(tmp_RGB,entity_it,hit_point,view_point);
+            
+            
+            RGB[0] += tmp_RGB[0]<0?0:tmp_RGB[0];
+            RGB[1] += tmp_RGB[1]<0?0:tmp_RGB[1];
+            RGB[2] += tmp_RGB[2]<0?0:tmp_RGB[2];
+            if(isnan(RGB[0])||isnan(RGB[1])||isnan(RGB[2])){
+                printf("other: rgb: %f %f %f\n",tmp_RGB[0],tmp_RGB[1],tmp_RGB[2]);
+            }
         }
     }
-    //if(current_recursive_depth!=W_Settings.max_depth)
-    //    printf("depth:%d reflect light rgb:%f %f %f\n",current_recursive_depth,In_v.rgb[0],In_v.rgb[1],In_v.rgb[2]);
-    
-    
-    R = In_v.rgb[0]<0?0:In_v.rgb[0];//makes them larger than 0
-    G = In_v.rgb[1]<0?0:In_v.rgb[1];
-    B = In_v.rgb[2]<0?0:In_v.rgb[2];
-    R_v.rgb[0] = R>1?1:R;R_v.rgb[1] = G>1?1:G;R_v.rgb[2] = B>1?1:B;//makers them smaller than 1
-    //set others to 0/null
-    R_v.dir[0]=0;R_v.dir[1]=0;R_v.dir[2]=0;
-    R_v.pos[0]=0;R_v.pos[1]=0;R_v.pos[2]=0;
-    R_v.entity=nullptr;
-    R_v.lgt = nullptr;
-    R_v.viewpoint[0]=0;R_v.viewpoint[1]=0;R_v.viewpoint[2]=0;
-    R_v.dis_in_t = 0;
-   // if(current_recursive_depth!=W_Settings.max_depth)
-     //   printf("depth:%d reflect light rgb:%f %f %f\n",current_recursive_depth,R_v.rgb[0],R_v.rgb[1],R_v.rgb[2]);
+    RGB[0] = RGB[0]<0?0:(RGB[0]>1?1:RGB[0]);
+    RGB[1] = RGB[1]<0?0:(RGB[1]>1?1:RGB[1]);
+    RGB[2] = RGB[2]<0?0:(RGB[2]>1?1:RGB[2]);
     
     return true;
-
 }
 void World::calcu_norm_vec(float &rx,float &ry,float &rz,float sx,float sy,float sz,float dx,float dy,float dz){
     rx = dx-sx;ry = dy-sy;rz = dz-sz;

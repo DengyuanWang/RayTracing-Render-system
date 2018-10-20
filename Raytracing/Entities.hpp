@@ -31,7 +31,7 @@ public:
     bool set_entity_parameter(int index,float &value);
     Rays get_normal_vec(float pos[3]);
     bool check_intersect(R_values &R_v,Rays ray);
-    Rays get_reflection_ray(R_values R_v);
+    Rays get_reflection_ray(Rays ray,float hitpoint[3]);
 private:
     void calcu_norm_vec(float &rx,float &ry,float &rz,float sx,float sy,float sz,float dx,float dy,float dz){
         rx = dx-sx;ry = dy-sy;rz = dz-sz;

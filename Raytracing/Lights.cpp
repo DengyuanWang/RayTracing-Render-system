@@ -7,7 +7,6 @@
 //
 
 #include "Lights.hpp"
-#include "Entities.hpp"
 std::string Lights::get_lgt_name(){
     switch (lgt_name) {
         case spot_light:
@@ -52,12 +51,10 @@ bool Lights::set_lgt_parameter(int index,float value){
     lgt_parameters[index] = value;
     return true;
 }
-bool Lights::calcu_color(float &R,float &G,float &B,R_values R_v){
-    R_v.rgb[0] = 0;
-    R_v.rgb[1] = 0;
-    R_v.rgb[2] = 0;
+bool Lights::calcu_color(float RGB[3],Entities *entity_it,float hit_point[3],float viewpoint[3]){
+    //output rgb, input entity_it,hit_point[3],viewpoint[3],
+    RGB[0] = 0;RGB[1] = 0;RGB[2] = 0;
     bool delum_tag=true;
-    Entities *it = (Entities*)R_v.entity;
     switch (lgt_name) {
         case lgt_name::directional_light:
             delum_tag=false;
@@ -65,13 +62,20 @@ bool Lights::calcu_color(float &R,float &G,float &B,R_values R_v){
         case lgt_name::ambient_light:
             //printf("ambient r = %f,g = %f,b = %f\n",R,G,B);
             float ar,ag,ab;
-            it->get_property_material(0, ar);
-            it->get_property_material(1, ag);
-            it->get_property_material(2, ab);
+            entity_it->get_property_material(0, ar);
+            entity_it->get_property_material(1, ag);
+            entity_it->get_property_material(2, ab);
             //printf("ar = %f,ag = %f,ab = %f\n",ar,ag,ab);
-            R = ar*lgt_parameters[0];
-            G = ag*lgt_parameters[1];
-            B = ab*lgt_parameters[2];
+            RGB[0] = ar*lgt_parameters[0];
+            RGB[1] = ag*lgt_parameters[1];
+            RGB[2] = ab*lgt_parameters[2];
+
+            RGB[0] = RGB[0]<0?0:RGB[0];
+            RGB[1] = RGB[1]<0?0:RGB[1];
+            RGB[2] = RGB[2]<0?0:RGB[2];
+            if(isnan(RGB[0])||isnan(RGB[1])||isnan(RGB[2])){
+                printf("specularity: rgb: %f %f %f\n",RGB[0],RGB[1],RGB[2]);
+            }
             return true;
             break;
         default:
@@ -81,14 +85,15 @@ bool Lights::calcu_color(float &R,float &G,float &B,R_values R_v){
     if(lgt_name==lgt_name::directional_light)
          delum_tag=false;
     else delum_tag=true;
-    Lambertian_shading(R_v);//add rgb to R_v
-    specularity_shading_phong(R_v);//add rgb to R_v; error
-    R = R_v.rgb[0];
-    G = R_v.rgb[1];
-    B = R_v.rgb[2];
+    Lambertian_shading(RGB,entity_it,hit_point);//add rgb to RGB
+    specularity_shading_phong(RGB, entity_it, hit_point, viewpoint);//add rgb to RGB
+    RGB[0] = RGB[0]<0?0:RGB[0];
+    RGB[1] = RGB[1]<0?0:RGB[1];
+    RGB[2] = RGB[2]<0?0:RGB[2];
     return true;
 }
-Rays Lights::get_a_ray(R_values R_v){//from a point to light
+Rays Lights::get_a_ray(float hit_point[3]){//from a point to light
+    //input hit_pointe,entity-pointer
     Rays ray;
     float x = lgt_parameters[3],y = lgt_parameters[4],z = lgt_parameters[5];
     switch (lgt_name) {
@@ -97,9 +102,9 @@ Rays Lights::get_a_ray(R_values R_v){//from a point to light
             // this ray is from light to point
             calcu_norm_vec(ray.Direction[0],ray.Direction[1],ray.Direction[2],
                                2*x,2*y,2*z,x,y,z);
-            ray.Point[0] = R_v.pos[0]+0.001*ray.Direction[0];
-            ray.Point[1] = R_v.pos[1]+0.001*ray.Direction[1];
-            ray.Point[2] = R_v.pos[2]+0.001*ray.Direction[2];
+            ray.Point[0] = hit_point[0]+0.001*ray.Direction[0];
+            ray.Point[1] = hit_point[1]+0.001*ray.Direction[1];
+            ray.Point[2] = hit_point[2]+0.001*ray.Direction[2];
             ray.range = -1;
             return ray;
         case lgt_name::ambient_light:
@@ -110,27 +115,27 @@ Rays Lights::get_a_ray(R_values R_v){//from a point to light
             // this ray is from light to point
 
             calcu_norm_vec(ray.Direction[0],ray.Direction[1],ray.Direction[2],
-                               R_v.pos[0],R_v.pos[1],R_v.pos[2],x,y,z);
-            ray.Point[0] = R_v.pos[0]+0.001*ray.Direction[0];
-            ray.Point[1] = R_v.pos[1]+0.001*ray.Direction[1];
-            ray.Point[2] = R_v.pos[2]+0.001*ray.Direction[2];
-            ray.range = (x-R_v.pos[0])/ray.Direction[0];
+                               hit_point[0],hit_point[1],hit_point[2],x,y,z);
+            ray.Point[0] = hit_point[0]+0.001*ray.Direction[0];
+            ray.Point[1] = hit_point[1]+0.001*ray.Direction[1];
+            ray.Point[2] = hit_point[2]+0.001*ray.Direction[2];
+            ray.range = (x-hit_point[0])/ray.Direction[0];
             return ray;
     }
     
 }
-void Lights::Lambertian_shading(R_values &R_v){
+void Lights::Lambertian_shading(float RGB[3],Entities *entity_it,float hit_point[3]){
+    //output: rgb, input: entity_it,hit_point[3],
     bool delum_tag=true;
     if(lgt_name==lgt_name::directional_light)
         delum_tag = false;
     float dr,dg,db;
-    Entities *it = (Entities*)R_v.entity;
-    it->get_property_material(3, dr);it->get_property_material(4, dg);it->get_property_material(5, db);
+    entity_it->get_property_material(3, dr);entity_it->get_property_material(4, dg);entity_it->get_property_material(5, db);
     float n[3];
     Rays OP;
-    OP = it->get_normal_vec(R_v.pos);
+    OP = entity_it->get_normal_vec(hit_point);
     n[0] = OP.Direction[0];n[1] = OP.Direction[1];n[2] = OP.Direction[2];
-    Rays ray = get_a_ray(R_v);//get a ray from hit point to light
+    Rays ray = get_a_ray(hit_point);//get a ray from hit point to light
     float delta_r,delta_g,delta_b,theta;
     theta = 180*acos(n[0]*ray.Direction[0]+n[1]*ray.Direction[1]+n[2]*ray.Direction[2])/M_PI;
     //printf("theta = %f\n",theta);
@@ -140,19 +145,25 @@ void Lights::Lambertian_shading(R_values &R_v){
     if(delum_tag){
         float x,y,z;
         x = lgt_parameters[3];y = lgt_parameters[4];z = lgt_parameters[5];
-        delum_factor = delum_factor/(pow(R_v.pos[0]-x,2)+pow(R_v.pos[1]-y,2)+pow(R_v.pos[2]-z,2));
+        delum_factor = delum_factor/(pow(hit_point[0]-x,2)+pow(hit_point[1]-y,2)+pow(hit_point[2]-z,2));
     }
     delta_r = dr*delum_factor*lgt_parameters[0]*fmax(0,cos(M_PI*theta/180));
     delta_g = dg*delum_factor*lgt_parameters[1]*fmax(0,cos(M_PI*theta/180));
     delta_b = db*delum_factor*lgt_parameters[2]*fmax(0,cos(M_PI*theta/180));
-    R_v.rgb[0] += delta_r;
-    R_v.rgb[1] += delta_g;
-    R_v.rgb[2] += delta_b;
+    RGB[0] += delta_r;
+    RGB[1] += delta_g;
+    RGB[2] += delta_b;
+    RGB[0] = RGB[0]<0?0:RGB[0];
+    RGB[1] = RGB[1]<0?0:RGB[1];
+    RGB[2] = RGB[2]<0?0:RGB[2];
+    if(isnan(RGB[0])||isnan(RGB[1])||isnan(RGB[2])){
+        printf("lambient: rgb: %f %f %f\n",RGB[0],RGB[1],RGB[2]);
+    }
 }
-void Lights::specularity_shading_phong(R_values &R_v){
+void Lights::specularity_shading_phong(float RGB[3], Entities *entity_it,float hit_point[3],float viewpoint[3]){
+    //output:rgb, input: entity_it, hit_point, viewpoint
     float sr,sg,sb;
-    Entities *it = (Entities*)R_v.entity;
-    it->get_property_material(6, sr);it->get_property_material(7, sg);it->get_property_material(8, sb);
+    entity_it->get_property_material(6, sr);entity_it->get_property_material(7, sg);entity_it->get_property_material(8, sb);
     bool delum_tag=true;
     if(lgt_name==lgt_name::directional_light)
         delum_tag = false;
@@ -161,16 +172,16 @@ void Lights::specularity_shading_phong(R_values &R_v){
     //R = I - 2*N*dot(I*N)
     float v[3],n[3],R_[3];//view,normal,reflection
     float n_;//power factor
-    it->get_property_material(9, n_);//get power factor
+    entity_it->get_property_material(9, n_);//get power factor
     Rays norm;
-    norm = it->get_normal_vec(R_v.pos);//got norm
+    norm = entity_it->get_normal_vec(hit_point);//got norm
     n[0] = norm.Direction[0];n[1] = norm.Direction[1];n[2] = norm.Direction[2];
     
-    Rays ray=get_a_ray(R_v);//from point to light
+    Rays ray=get_a_ray(hit_point);//from point to light
     ray.Direction[0] = -ray.Direction[0];ray.Direction[1] = -ray.Direction[1];ray.Direction[2] = -ray.Direction[2];//flip direction
     calcu_norm_vec(v[0],v[1],v[2],
-                   R_v.pos[0],R_v.pos[1],R_v.pos[2]
-                   ,R_v.viewpoint[0],R_v.viewpoint[1],R_v.viewpoint[2]);//a vector from pos to viewpoint
+                   hit_point[0],hit_point[1],hit_point[2]
+                   ,viewpoint[0],viewpoint[1],viewpoint[2]);//a vector from hit_point to viewpoint
     float dot = (ray.Direction[0]*n[0]+ray.Direction[1]*n[1]+ray.Direction[2]*n[2]);
     R_[0] = ray.Direction[0]-2*dot*n[0];
     R_[1] = ray.Direction[1]-2*dot*n[1];
@@ -183,9 +194,15 @@ void Lights::specularity_shading_phong(R_values &R_v){
     if(delum_tag){
         float x,y,z;
         x = lgt_parameters[3];y = lgt_parameters[4];z = lgt_parameters[5];
-        delum_factor = delum_factor/(pow(R_v.pos[0]-x,2)+pow(R_v.pos[1]-y,2)+pow(R_v.pos[2]-z,2));
+        delum_factor = delum_factor/(pow(hit_point[0]-x,2)+pow(hit_point[1]-y,2)+pow(hit_point[2]-z,2));
     }
-    R_v.rgb[0] +=sr*delum_factor*lgt_parameters[0]*dot;
-    R_v.rgb[1] +=sg*delum_factor*lgt_parameters[1]*dot;
-    R_v.rgb[2] +=sb*delum_factor*lgt_parameters[2]*dot;
+    RGB[0] += sr*delum_factor*lgt_parameters[0]*dot;
+    RGB[1] += sg*delum_factor*lgt_parameters[1]*dot;
+    RGB[2] += sb*delum_factor*lgt_parameters[2]*dot;
+    RGB[0] = RGB[0]<0?0:RGB[0];
+    RGB[1] = RGB[1]<0?0:RGB[1];
+    RGB[2] = RGB[2]<0?0:RGB[2];
+    if(isnan(RGB[0])||isnan(RGB[1])||isnan(RGB[2])){
+        printf("specularity: rgb: %f %f %f\n",RGB[0],RGB[1],RGB[2]);
+    }
 }

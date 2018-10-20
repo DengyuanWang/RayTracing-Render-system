@@ -69,20 +69,19 @@ Rays Entities::get_normal_vec(float pos[3]){
             return norm;
     }
 }
-Rays Entities::get_reflection_ray(R_values R_v){
+Rays Entities::get_reflection_ray(Rays ray,float hitpoint[3]){//intput ray, which hit at hitpoint
     //R = ori_ray - 2*N*dot(ori_ray*N);
-    Rays norm = get_normal_vec(R_v.pos);
-    Rays ori_ray,reflect_ray;
-    calcu_norm_vec(ori_ray.Direction[0],ori_ray.Direction[1],ori_ray.Direction[2],
-                    R_v.viewpoint[0],R_v.viewpoint[1],R_v.viewpoint[2],
-                            R_v.pos[0],R_v.pos[1],R_v.pos[2]);
-
-    float dot = (ori_ray.Direction[0]*norm.Direction[0]+
-                 ori_ray.Direction[1]*norm.Direction[1]+
-                 ori_ray.Direction[2]*norm.Direction[2]);
-    reflect_ray.Direction[0] = ori_ray.Direction[0]-2*dot*norm.Direction[0];
-    reflect_ray.Direction[1] = ori_ray.Direction[1]-2*dot*norm.Direction[1];
-    reflect_ray.Direction[2] = ori_ray.Direction[2]-2*dot*norm.Direction[2];
+    Rays norm = get_normal_vec(hitpoint);
+    Rays reflect_ray;
+    float dot = (ray.Direction[0]*norm.Direction[0]+
+                 ray.Direction[1]*norm.Direction[1]+
+                 ray.Direction[2]*norm.Direction[2]);
+    reflect_ray.Direction[0] = ray.Direction[0]-2*dot*norm.Direction[0];
+    reflect_ray.Direction[1] = ray.Direction[1]-2*dot*norm.Direction[1];
+    reflect_ray.Direction[2] = ray.Direction[2]-2*dot*norm.Direction[2];
+    reflect_ray.Point[0] = hitpoint[0]+0.001*reflect_ray.Direction[0];
+    reflect_ray.Point[1] = hitpoint[1]+0.001*reflect_ray.Direction[1];
+    reflect_ray.Point[2] = hitpoint[2]+0.001*reflect_ray.Direction[2];
     return reflect_ray;
 }
 

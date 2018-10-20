@@ -11,6 +11,7 @@
 
 #include "Default_setting.h"
 
+#include "Entities.hpp"
 class Lights{
     //directional_light r, g, b, x, y, z
     //float directional_light[6] = {1, 0, 0, 1, 0, 0};
@@ -37,11 +38,11 @@ public:
     bool set_lgt_name(std::string name);
     bool get_lgt_parameter(int index,float value);
     bool set_lgt_parameter(int index,float value);
-    bool calcu_color(float &R,float &G,float &B,R_values R_v);
-    Rays get_a_ray(R_values R_v);
+    bool calcu_color(float RGB[3],Entities *entity_it,float hit_point[3],float viewpoint[3]);
+    Rays get_a_ray(float hit_point[3]);
 private:
-    void Lambertian_shading(R_values &R_v);
-    void specularity_shading_phong(R_values &R_v);
+    void Lambertian_shading(float RBG[3],Entities *entity_it,float hit_point[3]);
+    void specularity_shading_phong(float RGB[3], Entities *entity_it,float hit_point[3],float viewpoint[3]);
     void calcu_norm_vec(float &rx,float &ry,float &rz,float sx,float sy,float sz,float dx,float dy,float dz){
         rx = dx-sx;ry = dy-sy;rz = dz-sz;
         float l_d = sqrt(rx*rx+ry*ry+rz*rz);
