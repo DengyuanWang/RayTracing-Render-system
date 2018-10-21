@@ -35,7 +35,7 @@ typedef struct{
 typedef struct Rays{
     float Point[3];
     float Direction[3];
-    float range = -1;
+    float range = -1;//equals -1 means shoot into infinity, equals -2 means invalid.
 }Rays,*Ray_p;
 typedef struct Screen{
     float position[3];

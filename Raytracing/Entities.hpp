@@ -32,6 +32,7 @@ public:
     Rays get_normal_vec(float pos[3]);
     bool check_intersect(R_values &R_v,Rays ray);
     Rays get_reflection_ray(Rays ray,float hitpoint[3]);
+    Rays get_refraction_ray(Rays ray,float hitpoint[3],float ior_in,float ior_out);
 private:
     void calcu_norm_vec(float &rx,float &ry,float &rz,float sx,float sy,float sz,float dx,float dy,float dz){
         rx = dx-sx;ry = dy-sy;rz = dz-sz;
