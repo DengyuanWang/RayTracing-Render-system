@@ -203,5 +203,64 @@ bool Entities::check_intersect(R_values &R_v,Rays ray){
              }
          
      }
+     else if (entity_name==obj_name::triangle){
+         float x,x0,y,y0,z,z0,dx,dy,dz,r,t1,t2;
+         x = ray.Point[0];y = ray.Point[1];z = ray.Point[2];
+         dx = ray.Direction[0];dy = ray.Direction[1];dz = ray.Direction[2];
+         x0 = entity_parameters[0];
+         y0 = entity_parameters[1];
+         z0 = entity_parameters[2];
+         r  = entity_parameters[3];
+         float a,b,c;
+         a = dx*dx+dy*dy+dz*dz;
+         b = 2.0*(dx*(x-x0)+dy*(y-y0)+dz*(z-z0));
+         c = (x-x0)*(x-x0) + (y-y0)*(y-y0) + (z-z0)*(z-z0) - r*r;
+         if(b*b-4.0*a*c>=0)//intersect
+         {
+             t1 = (-b + sqrt(b*b-4.0*a*c))/(2.0*a);
+             t2 = (-b - sqrt(b*b-4.0*a*c))/(2.0*a);
+             t1 = t1<0.001?0:t1;
+             t2 = t2<0.001?0:t2;
+             if(fmax(t1,t2)<=0){}// no leagle one
+             else if(t1>0&&t2>0){
+                 if(ray.range>=0&&fmin(t1,t2)>ray.range){}//check for segment. for ray with range -1, means infinity;
+                 else{
+                     float t = fmin(t1,t2);//select nearer one
+                     R_v.dis_in_t = t;
+                     R_v.pos[0] = x+t*dx;R_v.pos[1] = y+t*dy;R_v.pos[2] = z+t*dz;
+                     if(abs(t)<0.0001){
+                         printf("error in check intersection\n");
+                         exit(0);
+                     }
+                     return true;
+                 }
+             }else if(t1>0){
+                 if(ray.range>=0&&t1>ray.range){}//check for segment. for ray with range -1, means infinity;
+                 else{
+                     float t = t1;
+                     R_v.dis_in_t = t;
+                     R_v.pos[0] = x+t*dx;R_v.pos[1] = y+t*dy;R_v.pos[2] = z+t*dz;
+                     if(abs(t)<0.001){
+                         printf("error in check intersection\n");
+                         exit(0);
+                     }
+                     return true;
+                 }
+             }else{
+                 if(ray.range>=0&&t2>ray.range){}//check for segment. for ray with range -1, means infinity;
+                 else{
+                     float t = t2;
+                     R_v.dis_in_t = t;
+                     R_v.pos[0] = x+t*dx;R_v.pos[1] = y+t*dy;R_v.pos[2] = z+t*dz;
+                     if(abs(t)<0.001){
+                         printf("error in check intersection\n");
+                         exit(0);
+                     }
+                     return true;
+                 }
+             }
+         }
+         
+     }
      return false;
 }
