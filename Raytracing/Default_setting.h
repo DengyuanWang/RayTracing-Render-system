@@ -32,7 +32,8 @@ typedef struct{
     float background[3] = {0, 0, 0};
     //material ar, ag, ab, dr, dg, db, sr, sg, sb, ns, tr, tg, tb, por
     float material[14] = {0, 0, 0, 1, 1, 1, 0, 0, 0, 5, 0, 0, 0, 1};
-    
+    //skyboxtag
+    bool skybox_tag = false;
 }World_Setting;
 typedef struct Rays{
     float Point[3];

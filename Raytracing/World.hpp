@@ -16,6 +16,7 @@
 #include "Default_setting.h"
 #include "Entities.hpp"
 #include "Lights.hpp"
+#include "Skybox.hpp"
 
 typedef struct vertex_{
     float x;
@@ -27,13 +28,14 @@ class World {
     World_Setting W_Settings;
     Ray_p Ray=nullptr;
     Screen_p Scn=nullptr;
+    Skybox Environment;
     std::list <Entities> Ets;
     std::list <Lights> Lgts;
     std::list<vertex_> Vertices_pool;
 public:
     World(std::string);
 //add wall and ground to the world;
-    bool build_world();
+    bool add_skybox();
     bool add_plane(float x,float y,float z,float dx,float dy,float dz);
 //load setting and generate world
     bool load_setting();

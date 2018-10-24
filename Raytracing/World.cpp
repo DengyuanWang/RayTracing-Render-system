@@ -14,13 +14,10 @@
 World::World(std::string filename){
     
     W_Settings.setting_file = filename;//specify the setting file
-    if(!build_world())
-        printf("build world error\n");
-}
-bool World::build_world(){
-    //add two wall
     
-    //add ground
+}
+bool World::add_skybox(){
+    Environment.load_skybox("stpeters_cross.bmp");
     
     return true;
 }
@@ -168,12 +165,27 @@ bool World::load_setting(){
             W_Settings.max_depth = max_depth;
             printf("max_depth of: %f\n", max_depth);
         }
+        else if (command == "skybox"){ //If the command is an max_depth command
+            W_Settings.skybox_tag = true;
+            add_skybox();
+            printf("Sky box true\n");
+        }
         else {
             getline(input, line); //skip rest of line
             std::cout << "WARNING. Do not know command: " << command << std::endl;
         }
     }
-    
+    if(W_Settings.skybox_tag)
+    {
+        int i=0;
+        for(std::list<Lights>::iterator it=Environment.Lgts.begin();it!=Environment.Lgts.end();++it)
+        {
+            Lights t = *it;
+            Lgts.push_front(t);
+            ++i;
+        }
+        printf("i = %d\n",i);
+    }
     return true;
 }
 bool World::add_plane(float x,float y,float z,float dx,float dy,float dz){//one point and one n could decide a plane
@@ -263,6 +275,7 @@ bool World::ray_tracing(){
     int width = W_Settings.film_resolution[0];
     int height = W_Settings.film_resolution[1];
     int percentage = -1;
+    #pragma omp parallel for schedule(dynamic, 1) private(r)       // OpenMP
     for(int i=0;i<width;i++)
         for(int j=0;j<height;j++)
         {
