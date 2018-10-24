@@ -17,7 +17,11 @@
 #include "Entities.hpp"
 #include "Lights.hpp"
 
-
+typedef struct vertex_{
+    float x;
+    float y;
+    float z;
+}vertex_;
 class World {
     Image *img=nullptr;
     World_Setting W_Settings;
@@ -25,6 +29,7 @@ class World {
     Screen_p Scn=nullptr;
     std::list <Entities> Ets;
     std::list <Lights> Lgts;
+    std::list<vertex_> Vertices_pool;
 public:
     World(std::string);
 //add wall and ground to the world;
@@ -33,6 +38,7 @@ public:
 //load setting and generate world
     bool load_setting();
     bool add_sphere(float x,float y,float z,float r);
+    bool add_triangle(int index1,int index2,int index3);
     bool add_directional_light(float r,float g,float b,float x,float y,float z);
     bool add_point_light(float r,float g,float b,float x,float y,float z);
     bool add_spot_light(float r,float g,float b,float px,float py,float pz,float dx,float dy,float dz,float angle1,float angle2);

@@ -73,6 +73,32 @@ bool World::load_setting(){
             W_Settings.background[2] = b;
             printf("Background color of (%f,%f,%f)\n",r,g,b);
         }
+        else if (command == "max_vertices"){ //If the command is a max_vertices command
+            float max_vertices;
+            input >> max_vertices;
+            W_Settings.max_vertices= max_vertices;
+            printf("Max_vertices of %f\n",max_vertices);
+        }
+        else if (command == "vertex"){ //If the command is a vertex command
+            vertex_ vertex;
+            input >> vertex.x>> vertex.y>> vertex.z;
+            //push the vertex to the tail;
+            if(Vertices_pool.size()<W_Settings.max_vertices){
+                Vertices_pool.push_back(vertex);
+                printf("vertex of (%f,%f,%f)\n",vertex.x,vertex.y,vertex.z);
+            }
+            else{
+                printf("Vertices_pool Overflowed\n");
+                exit(0);
+            }
+            
+        }
+        else if (command == "triangle"){
+            int index1,index2,index3;
+            input >> index1>> index2>>index3;
+            add_triangle(index1, index2, index3);
+            printf("add triangle %d %d %d\n",index1,index2,index3);
+        }
         else if (command == "camera"){ //If the command is a camera command
             float px, py, pz, dx, dy, dz, ux, uy, uz, ha;
             input >>px >> py>> pz>> dx>> dy>> dz>> ux>> uy>> uz>> ha;
@@ -140,7 +166,7 @@ bool World::load_setting(){
             float max_depth;
             input >> max_depth;
             W_Settings.max_depth = max_depth;
-            printf("max_deptj of: %f\n", max_depth);
+            printf("max_depth of: %f\n", max_depth);
         }
         else {
             getline(input, line); //skip rest of line
@@ -161,6 +187,32 @@ bool World::add_sphere(float x,float y,float z,float r){
     tmp.set_entity_parameter(1, y);
     tmp.set_entity_parameter(2, z);
     tmp.set_entity_parameter(3, r);
+    for(int i=0;i<14;i++)
+        tmp.set_property_material(i,  W_Settings.material[i]);
+    Ets.push_front(tmp);
+    return true;
+}
+bool World::add_triangle(int index1,int index2,int index3){
+    float vertex1[3],vertex2[3],vertex3[3];
+    int i=1,j=0;;
+    for(std::list<vertex_>::iterator it=Vertices_pool.begin();it!=Vertices_pool.end();++it,++i){
+        if(i==index1){
+            vertex1[0] = it->x;vertex1[1] = it->y;vertex1[2] = it->z;++j;
+        }else if(i==index2){
+            vertex2[0] = it->x;vertex2[1] = it->y;vertex2[2] = it->z;++j;
+        }else if (i==index3){
+            vertex3[0] = it->x;vertex3[1] = it->y;vertex3[2] = it->z;++j;
+        }else{
+            
+        }
+        if(j==3)
+            break;
+    }
+    Entities tmp;
+    tmp.set_entity_name("triangle");
+    tmp.set_entity_parameter(0, vertex1[0]);tmp.set_entity_parameter(1, vertex1[1]);tmp.set_entity_parameter(2, vertex1[2]);
+    tmp.set_entity_parameter(3, vertex2[0]);tmp.set_entity_parameter(4, vertex2[1]);tmp.set_entity_parameter(5, vertex2[2]);
+    tmp.set_entity_parameter(6, vertex3[0]);tmp.set_entity_parameter(7, vertex3[1]);tmp.set_entity_parameter(8, vertex3[2]);
     for(int i=0;i<14;i++)
         tmp.set_property_material(i,  W_Settings.material[i]);
     Ets.push_front(tmp);
@@ -224,7 +276,6 @@ bool World::ray_tracing(){
                 R.viewpoint[1] = W_Settings.camera[1];
                 R.viewpoint[2] = W_Settings.camera[2];
                 
-                W_Settings.max_depth = 5;
                 //input entity_it,viewpoint,hitpoint
                 calcu_color(Scn[index_ray(i, j)].rgb, R,Ray[index_ray(i, j)],W_Settings.max_depth);
                 Scn[index_ray(i, j)].rgb[0] *= 255;
@@ -251,9 +302,10 @@ bool World::check_intersect(R_values &R, Rays ray){//ray collision check
                 R=T_r;
                 R.entity = (void*)&(*it);
                 t = T_r.dis_in_t;
-                if (abs(t)<0.0001){
-                    t=2;
-                }
+                //if(it->get_entity_name()=="triangle")
+                //{
+                  //  printf("collision with triangle\n");
+                //}
             }
             collision_tag = true;
         }

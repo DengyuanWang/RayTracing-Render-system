@@ -26,6 +26,8 @@ typedef struct{
     int film_resolution[2] = {480, 640};//width and height fliped
     //max_depth n
     float max_depth = 5;
+    //max_vertices n
+    int max_vertices = 0;
     //background r, g, b
     float background[3] = {0, 0, 0};
     //material ar, ag, ab, dr, dg, db, sr, sg, sb, ns, tr, tg, tb, por

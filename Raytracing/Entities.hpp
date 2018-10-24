@@ -39,6 +39,14 @@ private:
         float l_d = sqrt(rx*rx+ry*ry+rz*rz);
         rx = rx/l_d;ry = ry/l_d;rz = rz/l_d;
     }
+    void calcu_cross_vec(float &rx,float &ry,float &rz,float ux,float uy,float uz,float vx,float vy,float vz){
+        rx = uy*vz - uz*vy;//a2b3 - a3b2
+        ry = uz*vx - ux*vz;//a3b1 - a1b3
+        rz = ux*vy - uy*vx;//a1b2 - a2b1
+        float l_d = sqrt(rx*rx+ry*ry+rz*rz);
+        rx = rx/l_d;ry = ry/l_d;rz = rz/l_d;
+    }
+    bool triangleIntersection(float hitpoint[3],float &distance ,Rays ray);
 };
 
 
